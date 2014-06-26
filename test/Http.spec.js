@@ -157,7 +157,6 @@ describe('Http', function() {
         ConnectionClass: ConnectionMock
       }).then(spy);
       PromiseBackend.flush(true);
-      ConnectionMockBackend.flush();
       expect(spy).toHaveBeenCalled();
       expect(spy.calls.count()).toBe(2);
     });
@@ -172,7 +171,6 @@ describe('Http', function() {
         ConnectionClass: ConnectionMock
       });
       PromiseBackend.flush(true);
-      ConnectionMockBackend.flush(true);
       expect(spy.calls.count()).toBe(2);
     });
 

@@ -5,6 +5,19 @@ import {inject} from 'di/testing';
 import {PromiseBackend, PromiseMock} from 'prophecy/PromiseMock';
 
 describe('XHRConnection', function() {
+  var sampleRequest;
+
+  beforeEach(function() {
+    sampleRequest = {
+      method: 'GET',
+      url: '/users',
+      responseType: '',
+      data: '',
+      params: new Map(),
+      headers: new Map()
+    };
+  });
+
   it('should implement IConnection', function() {
     assert.type(XHRConnection, IConnection);
   });
@@ -20,54 +33,39 @@ describe('XHRConnection', function() {
   describe('.open()', function() {
     it('should complain if no method provided', function() {
       var connection = new XHRConnection();
+      sampleRequest.method = undefined;
       expect(function() {
-        connection.open(undefined, '/users');
+        connection.open(sampleRequest);
       }).toThrow();
     });
 
-    it('should complain if provided method is not a string', function() {
+    it('should complain if provided method is not passed a valid request', function() {
       expect(function() {
         var connection = new XHRConnection();
-        connection.open(undefined, '/users');
-      }).toThrow();
-      expect(function() {
-        var connection = new XHRConnection();
-        connection.open('GET', '/users');
-      }).not.toThrow();
+        connection.open({});
+      }).toThrowError(/to be an instance of IRequest/);
     });
 
 
     it('should set the method to the instance', function() {
       var connection = new XHRConnection();
-      connection.open('GET', '/users');
+      connection.open(sampleRequest);
       expect(connection.method).toBe('GET');
-    });
-
-
-    it('should complain if invalid url type provided', function() {
-      expect(function() {
-        var connection = new XHRConnection();
-        connection.open('GET', undefined);
-      }).toThrow();
-      expect(function() {
-        var connection = new XHRConnection();
-        connection.open('GET', '/users');
-      }).not.toThrow();
     });
 
 
     it('should set the url to the instance', function () {
       var connection = new XHRConnection();
-      connection.open('GET', '/items');
-      expect(connection.url).toBe('/items');
+      connection.open(sampleRequest);
+      expect(connection.url).toBe('/users');
     });
 
 
     it('should complain if open is called more than once', function() {
       var connection = new XHRConnection();
-      connection.open('GET', '/items');
+      connection.open(sampleRequest);
       expect(function() {
-        connection.open('GET', '/items');
+        connection.open(sampleRequest);
       }).toThrow();
     });
   });
@@ -82,76 +80,20 @@ describe('XHRConnection', function() {
     it('should add load and error event listeners', function() {
       var listenerSpy = spyOn(XMLHttpRequest.prototype, 'addEventListener');
       var connection = new XHRConnection();
-      connection.open('GET', '/items');
+      connection.open(sampleRequest);
       expect(listenerSpy).not.toHaveBeenCalled();
-      connection.send();
+      connection.send(sampleRequest);
       expect(listenerSpy.calls.all()[1].args[0]).toBe('error');
       expect(listenerSpy.calls.all()[0].args[0]).toBe('load');
     });
 
 
-    it('should accept no data', function() {
+    it('should complain if not given a valid IRequest type', function() {
       var connection = new XHRConnection();
-      connection.open('POST', '/assets');
-      connection.send();
-      expect(sendSpy).toHaveBeenCalled();
-    });
-
-
-    it('should accept DataView data', function() {
-      var buffer = new ArrayBuffer();
-      var view = new DataView(buffer);
-      var connection = new XHRConnection();
-      connection.open('POST', '/assets');
-      connection.send(view);
-      expect(sendSpy).toHaveBeenCalledWith(view);
-    });
-
-
-    it('should accept Blob data', function() {
-      var blob = new Blob();
-      var connection = new XHRConnection();
-      connection.open('POST', '/assets');
-      connection.send(blob);
-      expect(sendSpy).toHaveBeenCalledWith(blob);
-    });
-
-
-    it('should accept Document data', function() {
-      var connection = new XHRConnection();
-      var doc = document.implementation.createDocument(null, 'doc');
-      connection.open('POST', '/assets');
-      connection.send(doc);
-      expect(sendSpy).toHaveBeenCalledWith(doc);
-    });
-
-
-    it('should accept String data', function() {
-      var connection = new XHRConnection();
-      var body = 'POST ME!';
-      connection.open('POST', '/assets');
-      connection.send(body);
-      expect(sendSpy).toHaveBeenCalledWith(body);
-    });
-
-
-    it('should accept FormData data', function() {
-      var connection = new XHRConnection();
-      var formData = new FormData();
-      formData.append('user', 'Jeff');
-      connection.open('POST', '/assets');
-      connection.send(formData);
-      expect(sendSpy).toHaveBeenCalledWith(formData);
-    });
-
-
-    it('should complain when given an invalid type of data', function() {
-      var connection = new XHRConnection();
-      connection.open('POST', '/assets');
+      connection.open(sampleRequest);
       expect(function() {
-        connection.send(5);
+        connection.send({});
       }).toThrow();
-
     });
   });
 
@@ -177,8 +119,8 @@ describe('XHRConnection', function() {
       var removedListenerSpy = spyOn(XMLHttpRequest.prototype, 'removeEventListener');
       var sendSpy = spyOn(XMLHttpRequest.prototype, 'send');
       var connection = new XHRConnection();
-      connection.open('GET', '/items');
-      connection.send();
+      connection.open(sampleRequest);
+      connection.send(sampleRequest);
       expect(addListenerSpy.calls.count()).toBe(2);
       expect(removedListenerSpy).not.toHaveBeenCalled();
       connection.onLoad_({});
@@ -205,8 +147,8 @@ describe('XHRConnection', function() {
       var removedListenerSpy = spyOn(XMLHttpRequest.prototype, 'removeEventListener');
       var sendSpy = spyOn(XMLHttpRequest.prototype, 'send');
       var connection = new XHRConnection();
-      connection.open('GET', '/items');
-      connection.send();
+      connection.open(sampleRequest);
+      connection.send(sampleRequest);
       expect(addListenerSpy.calls.count()).toBe(2);
       expect(removedListenerSpy).not.toHaveBeenCalled();
       connection.onError_({});

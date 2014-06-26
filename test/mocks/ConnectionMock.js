@@ -1,5 +1,7 @@
+import {assert} from 'assert';
 import {Deferred} from 'prophecy/Deferred';
 import {IConnection} from '../../src/IConnection';
+import {IRequest} from '../../src/IRequest';
 import {PromiseBackend} from 'prophecy/PromiseMock';
 
 export class ResponseMap extends Map {
@@ -88,13 +90,13 @@ export class ConnectionMock {
     this.deferred = new Deferred();
   }
 
-  open(method:string, url:string) {
-    this.method = method;
-    this.url = url;
+  open(req:IRequest) {
+    this.method = req.method;
+    this.url = req.url;
   }
 
-  send(data) {
-    this.data = data;
+  send(req:IRequest) {
+    this.data = req.data;
     ConnectionMockBackend.addConnection(this);
   }
 

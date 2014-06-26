@@ -7,7 +7,16 @@ import {inject, use} from 'di/testing';
 import {PromiseBackend} from 'prophecy/PromiseMock';
 
 describe('ConnectionMockBackend', function() {
+  var sampleRequest;
   beforeEach(function() {
+    sampleRequest = {
+      method: 'GET',
+      url: '/users',
+      responseType: '',
+      data: '',
+      params: new Map(),
+      headers: new Map()
+    };
     PromiseBackend.patchWithMock();
   });
 
@@ -69,8 +78,8 @@ describe('ConnectionMockBackend', function() {
             ConnectionMockBackend.whenRequest('GET', '/users').respond(200, 'User!');
             var connection = new ConnectionMock();
             var resolveSpy = spyOn(connection.deferred, 'resolve').and.callThrough();
-            connection.open('GET', '/users');
-            connection.send();
+            connection.open(sampleRequest);
+            connection.send(sampleRequest);
             ConnectionMockBackend.flush();
             expect(resolveSpy).toHaveBeenCalledWith('User!');
           });
@@ -83,7 +92,7 @@ describe('ConnectionMockBackend', function() {
         ConnectionMockBackend.whenRequest('GET', '/users').respond(200, 'User!');
         var connection = new ConnectionMock();
         var resolveSpy = spyOn(connection.deferred, 'resolve').and.callThrough();
-        connection.open('GET', '/users');
+        connection.open(sampleRequest);
         expect(ConnectionMockBackend.flush).toThrow();
         expect(resolveSpy).not.toHaveBeenCalled();
       });
@@ -96,8 +105,8 @@ describe('ConnectionMockBackend', function() {
         ConnectionMockBackend.whenRequest('GET', '/users').respond(400, 'Not Found');
         var connection = new ConnectionMock();
         var rejectSpy = spyOn(connection.deferred, 'reject').and.callThrough();
-        connection.open('GET', '/users');
-        connection.send();
+        connection.open(sampleRequest);
+        connection.send(sampleRequest);
         ConnectionMockBackend.flush();
         expect(rejectSpy).toHaveBeenCalledWith('Not Found');
       });
@@ -157,6 +166,19 @@ describe('ConnectionMockBackend', function() {
 
 
 describe('ConectionMock', function() {
+  var sampleRequest;
+
+  beforeEach(function() {
+    sampleRequest = {
+      method: 'GET',
+      url: '/users',
+      responseType: '',
+      data: '',
+      params: new Map(),
+      headers: new Map()
+    };
+  });
+
   afterEach(function() {
     delete ConnectionMockBackend.connections;
   });
@@ -179,23 +201,25 @@ describe('ConectionMock', function() {
       var connection = new ConnectionMock();
       expect(connection.method).toBeUndefined();
       expect(connection.url).toBeUndefined();
-      connection.open('GET', '/users');
+      connection.open(sampleRequest);
       expect(connection.method).toBe('GET');
       expect(connection.url).toBe('/users');
     });
 
     it('should complain if method is not a string', function() {
       var connection = new ConnectionMock();
+      sampleRequest.method = undefined;
       expect(function() {
-        connection.open(undefined, '/users');
+        connection.open(sampleRequest);
       }).toThrow();
     });
 
 
     it('should complain if url is not a string', function() {
       var connection = new ConnectionMock();
+      sampleRequest.url = undefined;
       expect(function() {
-        connection.open('GET', undefined);
+        connection.open(sampleRequest);
       }).toThrow();
     });
   });
@@ -205,19 +229,21 @@ describe('ConectionMock', function() {
     it('should add the connection to mock backend connections list', function() {
       var connection = new ConnectionMock();
       expect(ConnectionMockBackend.connections).toBeUndefined();
-      connection.open('GET', '/items');
+      connection.open(sampleRequest);
       expect(ConnectionMockBackend.connections).toBeUndefined();
-      connection.send();
+      connection.send(sampleRequest);
       expect(ConnectionMockBackend.connections.length).toBe(1);
     });
 
 
     it('should attach the data to the connection instance', function() {
-      var data = 'New Item';
       var connection = new ConnectionMock();
-      connection.open('POST', '/items');
-      connection.send(data);
-      expect(connection.data).toBe(data);
+      sampleRequest.data = 'New Item';
+      sampleRequest.method = 'POST';
+      sampleRequest.url = '/items';
+      connection.open(sampleRequest);
+      connection.send(sampleRequest);
+      expect(connection.data).toBe('New Item');
     });
   });
 

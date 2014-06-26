@@ -1,17 +1,8 @@
 import {Inject} from 'di/annotations';
 import {Injector} from 'di/injector';
 import {Deferred} from 'prophecy/Deferred';
+import {IRequest} from './IRequest';
 import {assert} from 'assert';
-
-var XHRDataTypes = assert.define('XHRDataTypes', (value) => {
-  if (value instanceof Document) {
-    //pass
-    //related to issue https://github.com/angular/assert/issues/5
-  }
-  else {
-    assert(value).is(DataView, Blob, Document, assert.string, FormData);
-  }
-});
 
 /**
  * Manages state of a single connection
@@ -56,12 +47,12 @@ export class XHRConnection {
     this.deferred.reject(evt);
   }
 
-  open (method:string, url:string) {
+  open (req:IRequest) {
     if (this.xhr_.readyState === 1) {
       throw new Error('Connection is already open');
     }
-    this.method = method;
-    this.url = url;
+    this.method = req.method;
+    this.url = req.url;
     this.xhr_.open(this.method, this.url);
   }
 
@@ -69,13 +60,10 @@ export class XHRConnection {
     this.xhr_.setRequestHeader(key, value);
   }
 
-  send (data) {
+  send (req:IRequest) {
     this.xhr_.addEventListener('load', this.onLoad_.bind(this));
     this.xhr_.addEventListener('error', this.onError_.bind(this));
-    if (typeof data !== 'undefined') {
-      assert.type(data, XHRDataTypes);
-    }
 
-    this.xhr_.send(data);
+    this.xhr_.send(req.data);
   }
 }
