@@ -1,20 +1,22 @@
 import {assert} from 'assert';
 
-var IRequest = assert.define('IRequest', function(value) {
-  var value;
-  //Assume it's a class, check its prototype
-  if (value instanceof Function) {
-    value = value.prototype;
+var XHRDataTypes = assert.define('XHRDataTypes', (value) => {
+  if (value instanceof Document) {
+    //pass
+    //related to issue https://github.com/angular/assert/issues/5
   }
   else {
-    value = value;
+    assert(value).is(DataView, Blob, Document, assert.string, FormData);
   }
+});
 
-  assert(value).is(assert.structure({
-    responseType: assert.string,
+var IRequest = assert.define('IRequest', function(value) {
+  assert.type(value, assert.structure({
+    url: assert.string,
     method: assert.string,
+    data: XHRDataTypes,
+    responseType: assert.string,
     params: Map,
-    data: assert.string,
     headers: Map
   }));
 

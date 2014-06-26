@@ -5,12 +5,23 @@ describe('IRequest', function() {
   var basicRequest;
   beforeEach(function(){
     basicRequest = {
+      url: '/users',
       responseType: 'json',
       method: 'get',
       params: new Map(),
       data: '',
       headers: new Map()
     }
+  });
+
+
+  it('should complain if url is missing', function() {
+    delete basicRequest.url;
+    expect(function() {
+      assert.type(basicRequest, IRequest);
+    }).toThrow();
+    basicRequest.url = '/users';
+    assert.type(basicRequest, IRequest);
   });
 
 
@@ -51,6 +62,52 @@ describe('IRequest', function() {
     }).toThrow();
     basicRequest.data = 'foo';
     assert.type(basicRequest, IRequest);
+  });
+
+
+  it('should accept DataView data', function() {
+    var buffer = new ArrayBuffer();
+    basicRequest.method = 'POST';
+    basicRequest.data = new DataView(buffer);
+    assert.type(basicRequest, IRequest);
+  });
+
+
+  it('should accept Blob data', function() {
+    basicRequest.data = new Blob();
+    basicRequest.method = 'POST';
+    assert.type(basicRequest, IRequest);
+  });
+
+
+  it('should accept Document data', function() {
+    basicRequest.data = document.implementation.createDocument(null, 'doc');
+    basicRequest.method = 'POST';
+    assert.type(basicRequest, IRequest);
+  });
+
+
+  it('should accept String data', function() {
+    basicRequest.data = 'POST ME!';
+    basicRequest.method = 'POST';
+    assert.type(basicRequest, IRequest);
+  });
+
+
+  it('should accept FormData data', function() {
+    basicRequest.data = new FormData();
+    basicRequest.data.append('user', 'Jeff');
+    basicRequest.method = 'POST';
+    assert.type(basicRequest, IRequest);
+  });
+
+
+  it('should complain when given an invalid type of data', function() {
+    basicRequest.method = 'POST';
+    basicRequest.data = 5;
+    expect(function() {
+      assert.type(basicRequest, IRequest);
+    }).toThrow();
   });
 
 
